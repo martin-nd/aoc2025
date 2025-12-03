@@ -1,0 +1,138 @@
+---
+title: Advent of Code 2025 - Solutions
+author: Martin Sloley
+date: today
+format:
+  html:
+    self-contained: true
+    theme: darkly
+---
+
+This year we're doing it in R. Libraries I used can be found below.
+
+```{r input loading}
+#| echo: false
+#| warning: false
+#| message: false
+```
+
+```{r libraries}
+#| message: false
+#| warning: false
+library(stringr)
+library(magrittr)
+library(roperators)
+```
+
+# Day 1
+
+## Part 1
+
+```{r}
+day1_input = readLines('inputs/day1.txt')
+
+turn = function(init, direction, steps) {
+    if (direction  == 'R') {
+        return((init + steps) %% 100)
+    } else {
+        tempstep = init - steps
+        if (tempstep >= 0) {
+            return(tempstep)
+        } else {
+            nextstep = tempstep
+            while (nextstep < 0) {
+                nextstep = nextstep + 100
+            }
+            return(nextstep)
+        }
+    }
+}
+
+parse_combination = function(com) {
+    direction = substr(com, 1, 1)
+    steps = substr(com, 2, nchar(com)) %>%
+        as.integer()
+
+    return(
+        list(dir = direction, step = steps)
+    )
+}
+
+decode = function(init, combinations) {
+    final_password = 0
+    for (com in combinations) {
+        next_step = parse_combination(com)
+        next_step = turn(init, next_step$dir, next_step$step)
+        if (next_step == 0) {
+            final_password %+=% 1
+        }
+        init = next_step
+    }
+    return(final_password)
+}
+
+decode(50, day1_input)
+```
+
+## Part 2
+
+```{r}
+turn2 = function(init, direction, steps) {
+    if (direction  == 'R') {
+        if (init + steps > 99) {
+            newstep = init + steps
+            crossed = 0
+            if (newstep %% 100 == 0) {
+                crossed = -1
+            }
+            while (newstep > 99) {
+                newstep %-=% 100
+                crossed %+=% 1
+            }
+            return(
+                list(newstep = newstep, crossed = crossed)
+            )
+        } else {
+            return(
+                list(newstep = init + steps, crossed = 0)
+            )
+        }
+    } else {
+        tempstep = init - steps
+        if (tempstep >= 0) {
+            return(
+                list(newstep = tempstep, crossed = 0)
+            )
+        } else {
+            nextstep = tempstep
+            crossed = 0
+            if (init == 0) {
+                crossed = -1
+            }
+            while (nextstep < 0) {
+                nextstep %+=% 100
+                crossed %+=% 1
+            }
+            return(
+                list(newstep = nextstep, crossed = crossed)
+            )
+        }
+    }
+}
+
+decode2 = function(init, combinations) {
+    final_password = 0
+    for (com in combinations) {
+        next_step = parse_combination(com)
+        next_step = turn2(init, next_step$dir, next_step$step)
+        if (next_step$newstep == 0) {
+            final_password %+=% 1
+        }
+        final_password %+=% next_step$crossed
+        init = next_step$newstep
+    }
+    return(final_password)
+}
+
+decode2(50, day1_input)
+```
